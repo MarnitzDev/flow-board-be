@@ -26,6 +26,7 @@ app.use(express.urlencoded({ extended: true }));
 import taskRoutes from './src/routes/tasks';
 import authRoutes from './src/routes/auth';
 import projectRoutes from './src/routes/projects';
+import boardRoutes from './src/routes/boards';
 import { setupTaskSockets } from './src/sockets/taskSockets';
 
 // Routes
@@ -36,6 +37,7 @@ app.get('/', (req, res) => {
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/boards', boardRoutes);
 app.use('/api/tasks', taskRoutes);
 
 // Socket.IO connection handling
