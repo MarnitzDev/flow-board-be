@@ -4,9 +4,12 @@
   "private": true,
   "scripts": {
     "start": "node dist/server.js",
-    "dev": "ts-node-dev --respawn --transpile-only server.ts",
+    "dev": "nodemon src/server.ts",
     "build": "tsc",
-    "build:watch": "tsc --watch"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "db:init": "ts-node src/scripts/initDatabase.ts",
+    "db:seed": "ts-node src/scripts/seedDatabase.ts",
+    "db:check": "ts-node src/scripts/checkDatabase.ts"
   },
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -24,5 +27,8 @@
     "socket.io": "^4.8.1",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
   }
 }
