@@ -16,13 +16,12 @@ export interface ISubtask {
 export interface ITask extends Document {
   title: string;
   description?: string;
-  status: 'todo' | 'in-progress' | 'done';
   priority: 'low' | 'medium' | 'high';
   assignee?: mongoose.Types.ObjectId;
   reporter: mongoose.Types.ObjectId;
   projectId: mongoose.Types.ObjectId;
   boardId: mongoose.Types.ObjectId;
-  columnId: mongoose.Types.ObjectId;
+  columnId: mongoose.Types.ObjectId; // This IS the status - references board column
   labels: ILabel[];
   dueDate?: Date;
   subtasks: ISubtask[];
@@ -73,18 +72,13 @@ const TaskSchema: Schema = new Schema({
     trim: true,
     maxlength: 2000
   },
-  status: {
-    type: String,
-    enum: ['todo', 'in-progress', 'done'],
-    default: 'todo'
-  },
   priority: {
     type: String,
     enum: ['low', 'medium', 'high'],
     default: 'medium'
   },
   assignee: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: Schema.Types.ObjectId,
     ref: 'User'
   },
   reporter: {
@@ -103,8 +97,10 @@ const TaskSchema: Schema = new Schema({
     required: true
   },
   columnId: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true
+    type: Schema.Types.ObjectId,
+    ref: 'Board.columns',
+    required: true,
+    index: true // For efficient filtering by column
   },
   labels: {
     type: [LabelSchema],

@@ -49,7 +49,7 @@ const checkDatabase = async () => {
     const sampleTask = await Task.findOne({}, 'title status priority assignee')
       .populate('assignee', 'username');
     console.log(`Sample Task: ${sampleTask?.title}`);
-    console.log(`  Status: ${sampleTask?.status}`);
+    console.log(`  Priority: ${sampleTask?.priority}`);
     console.log(`  Priority: ${sampleTask?.priority}`);
     console.log(`  Assigned to: ${(sampleTask?.assignee as any)?.username}`);
 

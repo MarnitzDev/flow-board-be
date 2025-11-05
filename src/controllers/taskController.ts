@@ -139,7 +139,6 @@ export const createTask = async (req: AuthenticatedRequest, res: Response): Prom
     const { 
       title, 
       description, 
-      status = 'todo',
       priority = 'medium',
       assignee,
       projectId,
@@ -197,7 +196,6 @@ export const createTask = async (req: AuthenticatedRequest, res: Response): Prom
     const task = new Task({
       title,
       description,
-      status,
       priority,
       assignee: assignee || null,
       reporter: userId,

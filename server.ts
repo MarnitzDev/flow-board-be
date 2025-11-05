@@ -12,8 +12,13 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env['CLIENT_URL'] || "http://localhost:3000",
-    methods: ["GET", "POST"]
+    origin: [
+      process.env['CLIENT_URL'] || "http://localhost:3000",
+      "http://localhost:3000",
+      "http://localhost:3001"
+    ],
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
@@ -21,6 +26,9 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static files from public directory
+app.use(express.static('public'));
 
 // Import routes
 import taskRoutes from './src/routes/tasks';
