@@ -4,6 +4,14 @@ import { AuthenticatedRequest } from '../types/auth';
 import Task from '../models/Task';
 import Board from '../models/Board';
 import Project from '../models/Project';
+import { Server } from 'socket.io';
+
+// Socket.IO instance (will be injected)
+let io: Server;
+
+export const setSocketIO = (socketInstance: Server) => {
+  io = socketInstance;
+};
 
 // GET /api/tasks - Get tasks for authenticated user (with optional filters)
 export const getTasks = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
@@ -136,6 +144,7 @@ export const getTaskById = async (req: AuthenticatedRequest, res: Response): Pro
 export const createTask = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
   try {
     const userId = req.user?.userId;
+    const user = req.user; // Get full user data from auth middleware
     const { 
       title, 
       description, 
@@ -224,6 +233,21 @@ export const createTask = async (req: AuthenticatedRequest, res: Response): Prom
       .populate('projectId', 'name color')
       .populate('boardId', 'name');
 
+    // 🚀 EMIT SOCKET.IO EVENT FOR REAL-TIME UPDATES
+    if (io && populatedTask) {
+      console.log('Emitting task:created event for task:', task._id);
+      
+      io.to(populatedTask.boardId.toString()).emit('task:created', {
+        task: populatedTask,
+        createdBy: {
+          userId: userId,
+          username: user?.username || 'Unknown User'
+        },
+        timestamp: new Date()
+      });
+      console.log('Emitted task:created event to board:', populatedTask.boardId.toString());
+    }
+
     return res.status(201).json({
       success: true,
       data: populatedTask
@@ -241,6 +265,7 @@ export const createTask = async (req: AuthenticatedRequest, res: Response): Prom
 export const updateTask = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
   try {
     const userId = req.user?.userId;
+    const user = req.user; // Get full user data
     const { id } = req.params;
     const updateData = req.body;
 
@@ -315,6 +340,42 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response): Prom
       }
     }
 
+    // 🚀 EMIT SOCKET.IO EVENT FOR REAL-TIME UPDATES
+    if (io && updatedTask) {
+      console.log('Emitting task:updated event for task:', id);
+      
+      // Determine if this was a column move
+      const wasColumnMove = oldColumnId !== newColumnId && (oldColumnId || newColumnId);
+      
+      if (wasColumnMove) {
+        // Emit specific move event
+        io.to(updatedTask.boardId.toString()).emit('task:moved', {
+          task: updatedTask,
+          fromColumnId: oldColumnId,
+          toColumnId: newColumnId,
+          boardId: updatedTask.boardId.toString(),
+          movedBy: {
+            userId: userId,
+            username: user?.username || 'Unknown User'
+          },
+          timestamp: new Date()
+        });
+        console.log('Emitted task:moved event to board:', updatedTask.boardId.toString());
+      } else {
+        // Emit general update event
+        io.to(updatedTask.boardId.toString()).emit('task:updated', {
+          task: updatedTask,
+          updatedBy: {
+            userId: userId,
+            username: user?.username || 'Unknown User'
+          },
+          changes: updateData,
+          timestamp: new Date()
+        });
+        console.log('Emitted task:updated event to board:', updatedTask.boardId.toString());
+      }
+    }
+
     return res.json({
       success: true,
       data: updatedTask
@@ -332,6 +393,7 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response): Prom
 export const moveTask = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
   try {
     const userId = req.user?.userId;
+    const user = req.user; // Get full user data
     const { id } = req.params;
     const { fromColumnId, toColumnId, position } = req.body;
 
@@ -403,6 +465,25 @@ export const moveTask = async (req: AuthenticatedRequest, res: Response): Promis
       .populate('projectId', 'name color')
       .populate('boardId', 'name');
 
+    // 🚀 EMIT SOCKET.IO EVENT FOR REAL-TIME UPDATES
+    if (io && populatedTask) {
+      console.log('Emitting task:moved event for task:', id);
+      
+      io.to(task.boardId.toString()).emit('task:moved', {
+        task: populatedTask,
+        fromColumnId,
+        toColumnId,
+        position,
+        boardId: task.boardId.toString(),
+        movedBy: {
+          userId: userId,
+          username: user?.username || 'Unknown User'
+        },
+        timestamp: new Date()
+      });
+      console.log('Emitted task:moved event to board:', task.boardId.toString());
+    }
+
     return res.json({
       success: true,
       data: populatedTask
@@ -420,6 +501,7 @@ export const moveTask = async (req: AuthenticatedRequest, res: Response): Promis
 export const deleteTask = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
   try {
     const userId = req.user?.userId;
+    const user = req.user; // Get full user data
     const { id } = req.params;
 
     if (!userId) {
@@ -462,7 +544,26 @@ export const deleteTask = async (req: AuthenticatedRequest, res: Response): Prom
       }
     }
 
+    const boardId = task.boardId.toString();
+    const taskTitle = task.title;
+
     await Task.findByIdAndDelete(id);
+
+    // 🚀 EMIT SOCKET.IO EVENT FOR REAL-TIME UPDATES
+    if (io) {
+      console.log('Emitting task:deleted event for task:', id);
+      
+      io.to(boardId).emit('task:deleted', {
+        taskId: id,
+        task: { title: taskTitle }, // Include minimal task data for UI updates
+        deletedBy: {
+          userId: userId,
+          username: user?.username || 'Unknown User'
+        },
+        timestamp: new Date()
+      });
+      console.log('Emitted task:deleted event to board:', boardId);
+    }
 
     return res.json({
       success: true,

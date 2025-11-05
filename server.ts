@@ -36,6 +36,7 @@ import authRoutes from './src/routes/auth';
 import projectRoutes from './src/routes/projects';
 import boardRoutes from './src/routes/boards';
 import { setupTaskSockets } from './src/sockets/taskSockets';
+import { setSocketIO } from './src/controllers/taskController';
 
 // Routes
 app.get('/', (req, res) => {
@@ -50,6 +51,9 @@ app.use('/api/tasks', taskRoutes);
 
 // Socket.IO connection handling
 setupTaskSockets(io);
+
+// Inject Socket.IO instance into controllers for REST API events
+setSocketIO(io);
 
 // MongoDB connection
 const connectDB = async () => {

@@ -30,6 +30,7 @@ export const authenticate = async (req: AuthenticatedRequest, res: Response, nex
 
     req.user = {
       userId: (user._id as any).toString(),
+      username: user.username,
       email: user.email,
       role: user.role
     };
