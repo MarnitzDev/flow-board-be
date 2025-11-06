@@ -813,3 +813,70 @@ export const getSubtasks = async (req: AuthenticatedRequest, res: Response): Pro
     });
   }
 };
+
+// GET /api/tasks/labels/:projectId - Get all unique labels for a project
+export const getProjectLabels = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
+  try {
+    const userId = req.user?.userId;
+    const { projectId } = req.params;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required'
+      });
+    }
+
+    // Verify user has access to the project
+    const project = await Project.findById(projectId);
+    
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        error: 'Project not found'
+      });
+    }
+
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    
+    if (!project.createdBy.equals(userObjectId) && !project.members.some(member => member.equals(userObjectId))) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied to this project'
+      });
+    }
+
+    // Aggregate unique labels from all tasks in the project
+    const labelsAggregation = await Task.aggregate([
+      { $match: { projectId: new mongoose.Types.ObjectId(projectId) } },
+      { $unwind: '$labels' },
+      { 
+        $group: {
+          _id: { name: '$labels.name', color: '$labels.color' },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          name: '$_id.name',
+          color: '$_id.color',
+          count: 1
+        }
+      },
+      { $sort: { count: -1, name: 1 } }
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: labelsAggregation
+    });
+
+  } catch (error) {
+    console.error('Get project labels error:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Server error while fetching labels' 
+    });
+  }
+};

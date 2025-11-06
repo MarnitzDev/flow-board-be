@@ -158,6 +158,12 @@ export interface ServerToClientEvents {
   'taskDeleted': (data: TaskDeletedEvent) => void;
   'taskMoved': (data: TaskMovedEvent) => void;
   
+  // Real-time collaboration events
+  'task:updated': (data: any) => void;
+  'task:moved': (data: any) => void;
+  'task:move_failed': (data: any) => void;
+  'test:drag': (data: any) => void;
+  
   // Collection events
   'collectionCreated': (data: CollectionCreatedEvent) => void;
   'collectionUpdated': (data: CollectionUpdatedEvent) => void;
@@ -192,6 +198,10 @@ export interface ClientToServerEvents {
   'task:update': (taskId: string, updates: Partial<TaskData>) => void;
   'task:delete': (taskId: string) => void;
   'task:move': (moveData: MoveTaskData) => void;
+  
+  // Real-time collaboration events
+  'task:updated': (data: any) => void;
+  'test:drag': (data: any) => void;
   
   // Collection operations
   'collection:create': (collectionData: any) => void;

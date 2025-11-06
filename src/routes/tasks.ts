@@ -1,5 +1,5 @@
 import express from 'express';
-import { getTasks, getTaskById, createTask, updateTask, moveTask, deleteTask, getTasksByBoard, createSubtask, getSubtasks } from '../controllers/taskController';
+import { getTasks, getTaskById, createTask, updateTask, moveTask, deleteTask, getTasksByBoard, createSubtask, getSubtasks, getProjectLabels } from '../controllers/taskController';
 import { authenticate } from '../middleware/auth';
 
 const router = express.Router();
@@ -12,6 +12,9 @@ router.get('/', getTasks);
 
 // GET /api/tasks/board/:boardId - Get all tasks for a specific board
 router.get('/board/:boardId', getTasksByBoard);
+
+// GET /api/tasks/labels/:projectId - Get all unique labels for a project
+router.get('/labels/:projectId', getProjectLabels);
 
 // GET /api/tasks/:id - Get a specific task
 router.get('/:id', getTaskById);

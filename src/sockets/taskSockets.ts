@@ -275,10 +275,51 @@ export const setupTaskSockets = (io: Server<ClientToServerEvents, ServerToClient
       }
     });
 
+    // ============ ADDITIONAL REAL-TIME EVENTS ============
+    
+    // Test event for debugging drag and drop
+    socket.on('test:drag', (data: any) => {
+      console.log('Received test:drag event:', data);
+      if (data.boardId) {
+        socket.to(data.boardId).emit('test:drag', {
+          ...data,
+          echoed: true,
+          timestamp: new Date()
+        });
+      }
+    });
+
+    // Direct task update broadcast (for immediate UI updates)
+    socket.on('task:updated', (data: any) => {
+      console.log('Received task:updated event:', data);
+      if (data.boardId) {
+        socket.to(data.boardId).emit('task:updated', {
+          ...data,
+          timestamp: new Date()
+        });
+      }
+    });
+
+    // Enhanced task move event (simplified for frontend)
     socket.on('task:move', async (moveData: MoveTaskData) => {
       try {
         const { taskId, fromColumnId, toColumnId, position, boardId } = moveData;
         
+        // First broadcast the optimistic update to other clients immediately
+        socket.to(boardId).emit('task:moved', {
+          taskId,
+          fromColumnId,
+          toColumnId,
+          position,
+          boardId,
+          movedBy: {
+            userId: userId,
+            username: username
+          },
+          timestamp: new Date()
+        });
+
+        // Then update the database
         const task = await Task.findById(taskId).populate('projectId', 'createdBy members');
 
         if (!task) {
@@ -328,8 +369,8 @@ export const setupTaskSockets = (io: Server<ClientToServerEvents, ServerToClient
           .populate('projectId', 'name color')
           .populate('boardId', 'name');
         
-        // Broadcast to all users in the board
-        io.to(boardId).emit('taskMoved', {
+        // Send confirmation with full task data
+        socket.to(boardId).emit('taskMoved', {
           task: populatedTask,
           fromColumnId,
           toColumnId,
@@ -346,6 +387,13 @@ export const setupTaskSockets = (io: Server<ClientToServerEvents, ServerToClient
       } catch (error) {
         console.error('Error moving task:', error);
         socket.emit('error', { message: 'Failed to move task', error: (error as Error).message });
+        
+        // Emit revert signal to all clients
+        socket.to(moveData.boardId).emit('task:move_failed', {
+          taskId: moveData.taskId,
+          error: 'Failed to move task',
+          timestamp: new Date()
+        });
       }
     });
 

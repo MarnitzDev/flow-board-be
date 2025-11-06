@@ -104,11 +104,11 @@ const seedDatabase = async () => {
       name: `${websiteProject.name} Board`,
       projectId: websiteProject._id,
       columns: [
-        { name: 'Backlog', color: '#6B7280', order: 0, taskIds: [] },
-        { name: 'Design', color: '#8B5CF6', order: 1, taskIds: [] },
-        { name: 'Development', color: '#F59E0B', order: 2, taskIds: [] },
-        { name: 'Testing', color: '#3B82F6', order: 3, taskIds: [] },
-        { name: 'Deployed', color: '#10B981', order: 4, taskIds: [] }
+        { name: 'Backlog', order: 0, taskIds: [] },
+        { name: 'Design', order: 1, taskIds: [] },
+        { name: 'Development', order: 2, taskIds: [] },
+        { name: 'Testing', order: 3, taskIds: [] },
+        { name: 'Deployed', order: 4, taskIds: [] }
       ]
     });
 
@@ -116,11 +116,11 @@ const seedDatabase = async () => {
       name: `${mobileProject.name} Board`,
       projectId: mobileProject._id,
       columns: [
-        { name: 'Ideas', color: '#6B7280', order: 0, taskIds: [] },
-        { name: 'Sprint Planning', color: '#EC4899', order: 1, taskIds: [] },
-        { name: 'In Progress', color: '#F59E0B', order: 2, taskIds: [] },
-        { name: 'Review', color: '#06B6D4', order: 3, taskIds: [] },
-        { name: 'Released', color: '#10B981', order: 4, taskIds: [] }
+        { name: 'Ideas', order: 0, taskIds: [] },
+        { name: 'Sprint Planning', order: 1, taskIds: [] },
+        { name: 'In Progress', order: 2, taskIds: [] },
+        { name: 'Review', order: 3, taskIds: [] },
+        { name: 'Released', order: 4, taskIds: [] }
       ]
     });
 
@@ -128,11 +128,11 @@ const seedDatabase = async () => {
       name: `${marketingProject.name} Board`,
       projectId: marketingProject._id,
       columns: [
-        { name: 'Concepts', color: '#6B7280', order: 0, taskIds: [] },
-        { name: 'Brainstorming', color: '#F59E0B', order: 1, taskIds: [] },
-        { name: 'Creating', color: '#8B5CF6', order: 2, taskIds: [] },
-        { name: 'Client Review', color: '#3B82F6', order: 3, taskIds: [] },
-        { name: 'Approved', color: '#10B981', order: 4, taskIds: [] }
+        { name: 'Concepts', order: 0, taskIds: [] },
+        { name: 'Brainstorming', order: 1, taskIds: [] },
+        { name: 'Creating', order: 2, taskIds: [] },
+        { name: 'Client Review', order: 3, taskIds: [] },
+        { name: 'Approved', order: 4, taskIds: [] }
       ]
     });
 
