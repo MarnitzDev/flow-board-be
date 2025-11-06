@@ -1,5 +1,5 @@
 import express from 'express';
-import { getTasks, getTaskById, createTask, updateTask, moveTask, deleteTask, getTasksByBoard } from '../controllers/taskController';
+import { getTasks, getTaskById, createTask, updateTask, moveTask, deleteTask, getTasksByBoard, createSubtask, getSubtasks } from '../controllers/taskController';
 import { authenticate } from '../middleware/auth';
 
 const router = express.Router();
@@ -18,6 +18,12 @@ router.get('/:id', getTaskById);
 
 // POST /api/tasks - Create a new task
 router.post('/', createTask);
+
+// POST /api/tasks/:id/subtasks - Create a subtask
+router.post('/:id/subtasks', createSubtask);
+
+// GET /api/tasks/:id/subtasks - Get all subtasks for a task
+router.get('/:id/subtasks', getSubtasks);
 
 // PUT /api/tasks/:id - Update a task
 router.put('/:id', updateTask);

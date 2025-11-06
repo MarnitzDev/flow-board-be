@@ -153,9 +153,12 @@ export const createTask = async (req: AuthenticatedRequest, res: Response): Prom
       projectId,
       boardId,
       columnId,
+      collectionId, // New: Optional collection/epic grouping
+      parentTaskId, // New: For creating subtasks
       labels = [],
       dueDate,
-      subtasks = []
+      subtasks = [],
+      order = 0 // New: For ordering tasks
     } = req.body;
 
     if (!userId) {
@@ -211,9 +214,14 @@ export const createTask = async (req: AuthenticatedRequest, res: Response): Prom
       projectId,
       boardId,
       columnId,
+      collectionId,
+      parentTaskId,
+      isSubtask: !!parentTaskId, // Auto-set based on parentTaskId
       labels,
       dueDate: dueDate ? new Date(dueDate) : undefined,
-      subtasks
+      order,
+      subtasks,
+      createdBy: userId
     });
 
     await task.save();
@@ -300,6 +308,22 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response): Prom
     // Handle column changes for board updates
     const oldColumnId = task.columnId?.toString();
     const newColumnId = updateData.columnId;
+
+    // Handle collection assignment changes
+    if (updateData.collectionId !== undefined && updateData.collectionId !== task.collectionId?.toString()) {
+      // Validate collection exists and belongs to the same project
+      if (updateData.collectionId) {
+        const Collection = require('../models/Collection');
+        const collection = await Collection.findById(updateData.collectionId);
+        
+        if (!collection || collection.projectId.toString() !== task.projectId.toString()) {
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid collection for this project'
+          });
+        }
+      }
+    }
 
     // Update the task
     const updatedTask = await Task.findByIdAndUpdate(
@@ -628,6 +652,164 @@ export const getTasksByBoard = async (req: AuthenticatedRequest, res: Response):
     return res.status(500).json({ 
       success: false, 
       error: 'Server error while fetching board tasks' 
+    });
+  }
+};
+
+// POST /api/tasks/:id/subtasks - Create a subtask
+export const createSubtask = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
+  try {
+    const userId = req.user?.userId;
+    const user = req.user;
+    const { id: parentTaskId } = req.params;
+    const { title, description, assignee, priority = 'medium', dueDate } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required'
+      });
+    }
+
+    if (!title) {
+      return res.status(400).json({
+        success: false,
+        error: 'Title is required for subtask'
+      });
+    }
+
+    // Find the parent task and verify access
+    const parentTask = await Task.findById(parentTaskId)
+      .populate('projectId', 'createdBy members');
+
+    if (!parentTask) {
+      return res.status(404).json({
+        success: false,
+        error: 'Parent task not found'
+      });
+    }
+
+    // Check if user has access to the task's project
+    const project = parentTask.projectId as any;
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    
+    if (!project.createdBy.equals(userObjectId) && !project.members.some((member: any) => member.equals(userObjectId))) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied to this project'
+      });
+    }
+
+    // Create the subtask
+    const subtask = new Task({
+      title,
+      description,
+      priority,
+      assignee: assignee || null,
+      reporter: userId,
+      projectId: parentTask.projectId,
+      boardId: parentTask.boardId,
+      columnId: parentTask.columnId,
+      collectionId: parentTask.collectionId,
+      parentTaskId,
+      isSubtask: true,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      createdBy: userId
+    });
+
+    await subtask.save();
+
+    // Populate the subtask for response
+    const populatedSubtask = await Task.findById(subtask._id)
+      .populate('assignee', 'username email avatar')
+      .populate('reporter', 'username email avatar');
+
+    // Emit Socket.IO event for real-time updates
+    if (io) {
+      const eventData = {
+        task: populatedSubtask,
+        parentTaskId,
+        user: {
+          id: user?.userId,
+          username: user?.username
+        }
+      };
+
+      // Emit to project room
+      io.to(`project:${parentTask.projectId}`).emit('subtaskCreated', eventData);
+      
+      // Emit to board room
+      io.to(`board:${parentTask.boardId}`).emit('subtaskCreated', eventData);
+    }
+
+    return res.status(201).json({
+      success: true,
+      data: populatedSubtask
+    });
+
+  } catch (error) {
+    console.error('Create subtask error:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Server error while creating subtask' 
+    });
+  }
+};
+
+// GET /api/tasks/:id/subtasks - Get all subtasks for a task
+export const getSubtasks = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
+  try {
+    const userId = req.user?.userId;
+    const { id: parentTaskId } = req.params;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required'
+      });
+    }
+
+    // Find the parent task and verify access
+    const parentTask = await Task.findById(parentTaskId)
+      .populate('projectId', 'createdBy members');
+
+    if (!parentTask) {
+      return res.status(404).json({
+        success: false,
+        error: 'Parent task not found'
+      });
+    }
+
+    // Check if user has access to the task's project
+    const project = parentTask.projectId as any;
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    
+    if (!project.createdBy.equals(userObjectId) && !project.members.some((member: any) => member.equals(userObjectId))) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied to this project'
+      });
+    }
+
+    // Get all subtasks for this parent task
+    const subtasks = await Task.find({ 
+      parentTaskId, 
+      isSubtask: true 
+    })
+    .populate('assignee', 'username email avatar')
+    .populate('reporter', 'username email avatar')
+    .sort({ order: 1, createdAt: 1 });
+
+    return res.status(200).json({
+      success: true,
+      data: subtasks
+    });
+
+  } catch (error) {
+    console.error('Get subtasks error:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Server error while fetching subtasks' 
     });
   }
 };

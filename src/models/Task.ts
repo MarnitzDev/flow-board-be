@@ -22,11 +22,15 @@ export interface ITask extends Document {
   projectId: mongoose.Types.ObjectId;
   boardId: mongoose.Types.ObjectId;
   columnId: mongoose.Types.ObjectId; // This IS the status - references board column
+  collectionId?: mongoose.Types.ObjectId; // Optional grouping within project
+  parentTaskId?: mongoose.Types.ObjectId; // For subtasks - references parent task
   labels: ILabel[];
   dueDate?: Date;
   subtasks: ISubtask[];
   timeTracked: number;
   dependencies: mongoose.Types.ObjectId[];
+  isSubtask: boolean; // Helps distinguish subtasks from main tasks
+  order: number; // For ordering tasks within collections/columns
   createdAt: Date;
   updatedAt: Date;
 }
@@ -102,6 +106,28 @@ const TaskSchema: Schema = new Schema({
     required: true,
     index: true // For efficient filtering by column
   },
+  collectionId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Collection',
+    required: false,
+    index: true // For efficient filtering by collection
+  },
+  parentTaskId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Task',
+    required: false,
+    index: true // For efficient subtask queries
+  },
+  isSubtask: {
+    type: Boolean,
+    default: false,
+    index: true // For efficient filtering between tasks and subtasks
+  },
+  order: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
   labels: {
     type: [LabelSchema],
     default: []
@@ -127,10 +153,13 @@ const TaskSchema: Schema = new Schema({
 });
 
 // Indexes for better query performance
-TaskSchema.index({ projectId: 1, status: 1 });
+TaskSchema.index({ projectId: 1, isSubtask: 1 });
 TaskSchema.index({ assignee: 1 });
 TaskSchema.index({ reporter: 1 });
 TaskSchema.index({ boardId: 1, columnId: 1 });
+TaskSchema.index({ collectionId: 1, order: 1 });
+TaskSchema.index({ parentTaskId: 1 }); // For finding subtasks
 TaskSchema.index({ dueDate: 1 });
+TaskSchema.index({ projectId: 1, collectionId: 1, isSubtask: 1 }); // Compound index for grouping
 
 export default mongoose.model<ITask>('Task', TaskSchema);

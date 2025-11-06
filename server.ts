@@ -35,8 +35,10 @@ import taskRoutes from './src/routes/tasks';
 import authRoutes from './src/routes/auth';
 import projectRoutes from './src/routes/projects';
 import boardRoutes from './src/routes/boards';
+import collectionRoutes from './src/routes/collections';
 import { setupTaskSockets } from './src/sockets/taskSockets';
 import { setSocketIO } from './src/controllers/taskController';
+import { setSocketIO as setCollectionSocketIO } from './src/controllers/collectionController';
 
 // Routes
 app.get('/', (req, res) => {
@@ -47,6 +49,7 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/boards', boardRoutes);
+app.use('/api/collections', collectionRoutes);
 app.use('/api/tasks', taskRoutes);
 
 // Socket.IO connection handling
@@ -54,6 +57,7 @@ setupTaskSockets(io);
 
 // Inject Socket.IO instance into controllers for REST API events
 setSocketIO(io);
+setCollectionSocketIO(io);
 
 // MongoDB connection
 const connectDB = async () => {

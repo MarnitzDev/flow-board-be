@@ -5,6 +5,7 @@ import Project from '../models/Project';
 import Board from '../models/Board';
 import Task from '../models/Task';
 import Comment from '../models/Comment';
+import Collection from '../models/Collection';
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ const seedDatabase = async () => {
     console.log('🗑️ Clearing existing data...');
     await Comment.deleteMany({});
     await Task.deleteMany({});
+    await Collection.deleteMany({});
     await Board.deleteMany({});
     await Project.deleteMany({});
     await User.deleteMany({});
@@ -31,7 +33,7 @@ const seedDatabase = async () => {
       email: 'admin@flowboard.com',
       password: 'admin123',
       role: 'admin',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face'
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin'
     });
 
     const johnUser = await User.create({
@@ -39,7 +41,7 @@ const seedDatabase = async () => {
       email: 'john@flowboard.com',
       password: 'password123',
       role: 'user',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face'
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=john'
     });
 
     const janeUser = await User.create({
@@ -47,7 +49,7 @@ const seedDatabase = async () => {
       email: 'jane@flowboard.com',
       password: 'password123',
       role: 'user',
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face'
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=jane'
     });
 
     const mikeUser = await User.create({
@@ -55,15 +57,15 @@ const seedDatabase = async () => {
       email: 'mike@flowboard.com',
       password: 'password123',
       role: 'user',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face'
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=mike'
     });
 
     const sarahUser = await User.create({
-      username: 'sarah_jones',
+      username: 'sarah_connor',
       email: 'sarah@flowboard.com',
       password: 'password123',
       role: 'user',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face'
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sarah'
     });
 
     console.log('✅ Created 5 users');
@@ -71,24 +73,24 @@ const seedDatabase = async () => {
     // Create Projects
     console.log('📂 Creating projects...');
     const websiteProject = await Project.create({
-      name: 'Website Redesign',
-      description: 'Complete overhaul of the company website with modern design and improved UX',
+      name: 'E-commerce Website',
+      description: 'Modern e-commerce platform with React and Node.js',
       color: '#3B82F6',
       createdBy: adminUser._id,
       members: [adminUser._id, johnUser._id, janeUser._id]
     });
 
     const mobileProject = await Project.create({
-      name: 'Mobile App Development',
-      description: 'Native mobile application for iOS and Android platforms',
+      name: 'Mobile Fitness App',
+      description: 'Cross-platform fitness tracking application',
       color: '#10B981',
       createdBy: johnUser._id,
       members: [johnUser._id, janeUser._id, mikeUser._id, sarahUser._id]
     });
 
     const marketingProject = await Project.create({
-      name: 'Marketing Campaign Q1',
-      description: 'Digital marketing campaign for the first quarter targeting new customers',
+      name: 'Brand Redesign',
+      description: 'Complete brand identity and marketing material refresh',
       color: '#F59E0B',
       createdBy: janeUser._id,
       members: [janeUser._id, mikeUser._id, sarahUser._id]
@@ -96,17 +98,17 @@ const seedDatabase = async () => {
 
     console.log('✅ Created 3 projects');
 
-    // Create Boards
+    // Create Boards with unique column names
     console.log('📋 Creating boards...');
     const websiteBoard = await Board.create({
       name: `${websiteProject.name} Board`,
       projectId: websiteProject._id,
       columns: [
         { name: 'Backlog', color: '#6B7280', order: 0, taskIds: [] },
-        { name: 'To Do', color: '#EF4444', order: 1, taskIds: [] },
-        { name: 'In Progress', color: '#F59E0B', order: 2, taskIds: [] },
-        { name: 'Review', color: '#3B82F6', order: 3, taskIds: [] },
-        { name: 'Done', color: '#10B981', order: 4, taskIds: [] }
+        { name: 'Design', color: '#8B5CF6', order: 1, taskIds: [] },
+        { name: 'Development', color: '#F59E0B', order: 2, taskIds: [] },
+        { name: 'Testing', color: '#3B82F6', order: 3, taskIds: [] },
+        { name: 'Deployed', color: '#10B981', order: 4, taskIds: [] }
       ]
     });
 
@@ -114,11 +116,11 @@ const seedDatabase = async () => {
       name: `${mobileProject.name} Board`,
       projectId: mobileProject._id,
       columns: [
-        { name: 'Backlog', color: '#6B7280', order: 0, taskIds: [] },
-        { name: 'To Do', color: '#EF4444', order: 1, taskIds: [] },
+        { name: 'Ideas', color: '#6B7280', order: 0, taskIds: [] },
+        { name: 'Sprint Planning', color: '#EC4899', order: 1, taskIds: [] },
         { name: 'In Progress', color: '#F59E0B', order: 2, taskIds: [] },
-        { name: 'Review', color: '#3B82F6', order: 3, taskIds: [] },
-        { name: 'Done', color: '#10B981', order: 4, taskIds: [] }
+        { name: 'Review', color: '#06B6D4', order: 3, taskIds: [] },
+        { name: 'Released', color: '#10B981', order: 4, taskIds: [] }
       ]
     });
 
@@ -126,164 +128,511 @@ const seedDatabase = async () => {
       name: `${marketingProject.name} Board`,
       projectId: marketingProject._id,
       columns: [
-        { name: 'Backlog', color: '#6B7280', order: 0, taskIds: [] },
-        { name: 'To Do', color: '#EF4444', order: 1, taskIds: [] },
-        { name: 'In Progress', color: '#F59E0B', order: 2, taskIds: [] },
-        { name: 'Review', color: '#3B82F6', order: 3, taskIds: [] },
-        { name: 'Done', color: '#10B981', order: 4, taskIds: [] }
+        { name: 'Concepts', color: '#6B7280', order: 0, taskIds: [] },
+        { name: 'Brainstorming', color: '#F59E0B', order: 1, taskIds: [] },
+        { name: 'Creating', color: '#8B5CF6', order: 2, taskIds: [] },
+        { name: 'Client Review', color: '#3B82F6', order: 3, taskIds: [] },
+        { name: 'Approved', color: '#10B981', order: 4, taskIds: [] }
       ]
     });
 
     console.log('✅ Created 3 boards');
 
-    // Create Sample Tasks
-    console.log('📝 Creating tasks...');
+    // Create Collections/Epics (only 3 - one per project)
+    console.log('🗂️ Creating collections/epics...');
     
-    const task1 = await Task.create({
-      title: 'Design Homepage Mockups',
-      description: 'Create wireframes and high-fidelity mockups for the new homepage design',
+    const websiteCollection = await Collection.create({
+      name: 'Core E-commerce Features',
+      description: 'Essential shopping cart, payment, and user account functionality',
+      color: '#3B82F6',
+      projectId: websiteProject._id,
+      createdBy: adminUser._id,
+      order: 0
+    });
+
+    const mobileCollection = await Collection.create({
+      name: 'Workout Tracking',
+      description: 'Exercise logging, progress tracking, and analytics features',
+      color: '#10B981',
+      projectId: mobileProject._id,
+      createdBy: johnUser._id,
+      order: 0
+    });
+
+    const marketingCollection = await Collection.create({
+      name: 'Visual Identity',
+      description: 'Logo, typography, color palette, and brand guidelines',
+      color: '#F59E0B',
+      projectId: marketingProject._id,
+      createdBy: janeUser._id,
+      order: 0
+    });
+
+    console.log('✅ Created 3 collections/epics');
+
+    // Create 15 diverse tasks with varied scenarios
+    console.log('📝 Creating 15 diverse tasks...');
+    
+    // Website Project Tasks (5 tasks) - Mix of with/without collection
+    const homepageTask = await Task.create({
+      title: 'Homepage Hero Section',
+      description: 'Design and implement the main landing page hero with product showcase, call-to-action buttons, and responsive layout for desktop and mobile users',
       status: 'done',
       priority: 'high',
       assignee: janeUser._id,
       reporter: adminUser._id,
       projectId: websiteProject._id,
       boardId: websiteBoard._id,
-      columnId: websiteBoard.columns[4]?._id, // Done column
+      columnId: websiteBoard.columns[4]?._id, // Deployed
+      collectionId: websiteCollection._id, // IN COLLECTION
       labels: [
-        { name: 'Design', color: '#8B5CF6' },
-        { name: 'High Priority', color: '#EF4444' }
+        { name: 'Frontend', color: '#3B82F6' },
+        { name: 'Critical', color: '#EF4444' }
       ],
-      dueDate: new Date('2025-11-15'),
-      subtasks: [
-        { title: 'Research competitor websites', completed: true },
-        { title: 'Create wireframes', completed: true },
-        { title: 'Design high-fidelity mockups', completed: true }
+      dueDate: new Date('2025-11-15'), // SHORT deadline
+      order: 0,
+      timeTracked: 720 // 12 hours
+    });
+
+    const paymentTask = await Task.create({
+      title: 'Payment Gateway Integration',
+      description: 'Integrate Stripe payment processing with webhook handling, error management, and PCI compliance. Support multiple payment methods including cards, PayPal, and Apple Pay.',
+      status: 'in-progress',
+      priority: 'high',
+      assignee: mikeUser._id,
+      reporter: adminUser._id,
+      projectId: websiteProject._id,
+      boardId: websiteBoard._id,
+      columnId: websiteBoard.columns[2]?._id, // Development
+      collectionId: websiteCollection._id, // IN COLLECTION
+      labels: [
+        { name: 'Backend', color: '#10B981' },
+        { name: 'Security', color: '#F59E0B' }
       ],
+      dueDate: new Date('2025-12-20'), // LONG deadline
+      order: 1,
       timeTracked: 480
     });
 
-    const task2 = await Task.create({
-      title: 'Implement Responsive Navigation',
-      description: 'Code the responsive navigation menu with mobile-first approach',
-      status: 'in-progress',
-      priority: 'high',
+    const seoTask = await Task.create({
+      title: 'SEO Optimization',
+      // NO DESCRIPTION - testing empty description
+      status: 'todo',
+      priority: 'medium',
       assignee: johnUser._id,
       reporter: adminUser._id,
       projectId: websiteProject._id,
       boardId: websiteBoard._id,
-      columnId: websiteBoard.columns[2]?._id, // In Progress column
-      labels: [
-        { name: 'Development', color: '#10B981' },
-        { name: 'Frontend', color: '#3B82F6' }
-      ],
-      dueDate: new Date('2025-11-20'),
-      subtasks: [
-        { title: 'Set up HTML structure', completed: true },
-        { title: 'Style desktop navigation', completed: true },
-        { title: 'Implement mobile menu', completed: false },
-        { title: 'Add animations', completed: false }
-      ],
+      columnId: websiteBoard.columns[0]?._id, // Backlog
+      // NO COLLECTION - standalone task
+      labels: [{ name: 'Marketing', color: '#EC4899' }],
+      dueDate: new Date('2025-11-28'), // MEDIUM deadline
+      order: 2
+    });
+
+    const dbTask = await Task.create({
+      title: 'Database Schema',
+      description: 'Design MongoDB collections for products, users, orders, and inventory management',
+      status: 'done',
+      priority: 'high',
+      assignee: mikeUser._id,
+      reporter: adminUser._id,
+      projectId: websiteProject._id,
+      boardId: websiteBoard._id,
+      columnId: websiteBoard.columns[4]?._id, // Deployed
+      // NO COLLECTION - standalone task
+      labels: [{ name: 'Database', color: '#8B5CF6' }],
+      // NO DUE DATE - testing open-ended tasks
+      order: 3,
       timeTracked: 360
     });
 
-    const task3 = await Task.create({
-      title: 'Setup React Native Project',
-      description: 'Initialize React Native project with navigation and state management',
+    const analyticsTask = await Task.create({
+      title: 'Analytics Dashboard',
+      description: 'Create admin dashboard with sales metrics, user behavior analytics, and real-time reporting using Chart.js and WebSocket connections for live updates.',
+      status: 'testing',
+      priority: 'low',
+      assignee: janeUser._id,
+      reporter: adminUser._id,
+      projectId: websiteProject._id,
+      boardId: websiteBoard._id,
+      columnId: websiteBoard.columns[3]?._id, // Testing
+      collectionId: websiteCollection._id, // IN COLLECTION
+      labels: [
+        { name: 'Analytics', color: '#06B6D4' },
+        { name: 'Dashboard', color: '#84CC16' }
+      ],
+      dueDate: new Date('2026-02-14'), // VERY LONG deadline for calendar testing
+      order: 4,
+      timeTracked: 240
+    });
+
+    // Mobile Project Tasks (5 tasks) - Mix scenarios
+    const workoutLogTask = await Task.create({
+      title: 'Workout Logger',
+      description: 'Exercise tracking with timer, sets/reps counter, rest periods, and exercise library with 200+ exercises categorized by muscle groups.',
+      status: 'in-progress',
+      priority: 'high',
+      assignee: sarahUser._id,
+      reporter: johnUser._id,
+      projectId: mobileProject._id,
+      boardId: mobileBoard._id,
+      columnId: mobileBoard.columns[2]?._id, // In Progress
+      collectionId: mobileCollection._id, // IN COLLECTION
+      labels: [
+        { name: 'Core Feature', color: '#10B981' },
+        { name: 'React Native', color: '#61DAFB' }
+      ],
+      dueDate: new Date('2025-11-22'), // SHORT deadline
+      order: 0,
+      timeTracked: 600
+    });
+
+    const offlineTask = await Task.create({
+      title: 'Offline Mode',
+      // NO DESCRIPTION
+      status: 'todo',
+      priority: 'medium',
+      assignee: mikeUser._id,
+      reporter: johnUser._id,
+      projectId: mobileProject._id,
+      boardId: mobileBoard._id,
+      columnId: mobileBoard.columns[1]?._id, // Sprint Planning
+      collectionId: mobileCollection._id, // IN COLLECTION
+      labels: [{ name: 'Data Sync', color: '#F59E0B' }],
+      // NO DUE DATE
+      order: 1
+    });
+
+    const pushNotifTask = await Task.create({
+      title: 'Push Notifications',
+      description: 'Firebase Cloud Messaging integration for workout reminders, achievement notifications, and social features with custom notification scheduling.',
+      status: 'todo',
+      priority: 'low',
+      assignee: sarahUser._id,
+      reporter: johnUser._id,
+      projectId: mobileProject._id,
+      boardId: mobileBoard._id,
+      columnId: mobileBoard.columns[0]?._id, // Ideas
+      // NO COLLECTION - standalone
+      labels: [{ name: 'Notifications', color: '#8B5CF6' }],
+      dueDate: new Date('2025-12-31'), // End of year deadline
+      order: 2
+    });
+
+    const socialTask = await Task.create({
+      title: 'Social Features',
+      description: 'Friend connections, workout sharing, leaderboards, challenges, and community features with real-time chat and photo sharing capabilities.',
+      status: 'review',
+      priority: 'medium',
+      assignee: johnUser._id,
+      reporter: johnUser._id,
+      projectId: mobileProject._id,
+      boardId: mobileBoard._id,
+      columnId: mobileBoard.columns[3]?._id, // Review
+      // NO COLLECTION - standalone
+      labels: [
+        { name: 'Social', color: '#EC4899' },
+        { name: 'Community', color: '#F97316' }
+      ],
+      dueDate: new Date('2025-11-18'), // VERY SHORT deadline
+      order: 3,
+      timeTracked: 180
+    });
+
+    const performanceTask = await Task.create({
+      title: 'App Performance',
+      // NO DESCRIPTION
       status: 'done',
       priority: 'high',
       assignee: mikeUser._id,
       reporter: johnUser._id,
       projectId: mobileProject._id,
       boardId: mobileBoard._id,
-      columnId: mobileBoard.columns[4]?._id, // Done column
-      labels: [
-        { name: 'Setup', color: '#6B7280' },
-        { name: 'React Native', color: '#61DAFB' }
-      ],
-      dueDate: new Date('2025-11-10'),
-      subtasks: [
-        { title: 'Install React Native CLI', completed: true },
-        { title: 'Setup navigation', completed: true },
-        { title: 'Configure Redux', completed: true }
-      ],
-      timeTracked: 240
+      columnId: mobileBoard.columns[4]?._id, // Released
+      collectionId: mobileCollection._id, // IN COLLECTION
+      labels: [{ name: 'Optimization', color: '#10B981' }],
+      // NO DUE DATE
+      order: 4,
+      timeTracked: 300
     });
 
-    const task4 = await Task.create({
-      title: 'Social Media Content Calendar',
-      description: 'Plan and schedule social media posts for Q1 campaign',
-      status: 'in-progress',
-      priority: 'medium',
+    // Marketing Project Tasks (5 tasks) - Mix scenarios
+    const logoTask = await Task.create({
+      title: 'Logo Design Concepts',
+      description: 'Create 10 initial logo concepts exploring different styles: modern minimalist, vintage, tech-focused, and organic approaches with color variations.',
+      status: 'done',
+      priority: 'high',
+      assignee: janeUser._id,
+      reporter: janeUser._id,
+      projectId: marketingProject._id,
+      boardId: marketingBoard._id,
+      columnId: marketingBoard.columns[4]?._id, // Approved
+      collectionId: marketingCollection._id, // IN COLLECTION
+      labels: [
+        { name: 'Design', color: '#8B5CF6' },
+        { name: 'Branding', color: '#EC4899' }
+      ],
+      dueDate: new Date('2025-11-12'), // VERY SHORT deadline - yesterday!
+      order: 0,
+      timeTracked: 960 // 16 hours
+    });
+
+    const colorPaletteTask = await Task.create({
+      title: 'Color Palette',
+      description: 'Develop primary, secondary, and accent color schemes with accessibility considerations (WCAG AA compliance) and usage guidelines for digital and print media.',
+      status: 'creating',
+      priority: 'high',
       assignee: sarahUser._id,
       reporter: janeUser._id,
       projectId: marketingProject._id,
       boardId: marketingBoard._id,
-      columnId: marketingBoard.columns[2]?._id, // In Progress column
-      labels: [
-        { name: 'Social Media', color: '#3B82F6' },
-        { name: 'Content', color: '#F59E0B' }
-      ],
-      dueDate: new Date('2025-11-28'),
-      subtasks: [
-        { title: 'Research trending hashtags', completed: true },
-        { title: 'Create content templates', completed: false },
-        { title: 'Schedule posts', completed: false }
-      ],
+      columnId: marketingBoard.columns[2]?._id, // Creating
+      collectionId: marketingCollection._id, // IN COLLECTION
+      labels: [{ name: 'Color Theory', color: '#F59E0B' }],
+      dueDate: new Date('2025-11-19'), // SHORT deadline
+      order: 1,
       timeTracked: 120
     });
 
-    console.log('✅ Created 4 tasks');
+    const websiteRedTask = await Task.create({
+      title: 'Website Redesign',
+      // NO DESCRIPTION
+      status: 'brainstorming',
+      priority: 'medium',
+      assignee: johnUser._id,
+      reporter: janeUser._id,
+      projectId: marketingProject._id,
+      boardId: marketingBoard._id,
+      columnId: marketingBoard.columns[1]?._id, // Brainstorming
+      // NO COLLECTION - standalone
+      labels: [{ name: 'Web Design', color: '#3B82F6' }],
+      dueDate: new Date('2026-01-15'), // VERY LONG deadline
+      order: 2
+    });
 
-    // Update board columns with task IDs
-    if (websiteBoard.columns[4] && task1._id) {
-      websiteBoard.columns[4].taskIds.push(task1._id as any);
-    }
-    if (websiteBoard.columns[2] && task2._id) {
-      websiteBoard.columns[2].taskIds.push(task2._id as any);
-    }
-    if (mobileBoard.columns[4] && task3._id) {
-      mobileBoard.columns[4].taskIds.push(task3._id as any);
-    }
-    if (marketingBoard.columns[2] && task4._id) {
-      marketingBoard.columns[2].taskIds.push(task4._id as any);
-    }
+    const socialMediaTask = await Task.create({
+      title: 'Social Media Templates',
+      description: 'Design Instagram, Facebook, Twitter, and LinkedIn post templates with brand guidelines, multiple size formats, and seasonal variations.',
+      status: 'concepts',
+      priority: 'low',
+      assignee: sarahUser._id,
+      reporter: janeUser._id,
+      projectId: marketingProject._id,
+      boardId: marketingBoard._id,
+      columnId: marketingBoard.columns[0]?._id, // Concepts
+      // NO COLLECTION - standalone
+      labels: [
+        { name: 'Social Media', color: '#EC4899' },
+        { name: 'Templates', color: '#06B6D4' }
+      ],
+      // NO DUE DATE
+      order: 3
+    });
 
-    await websiteBoard.save();
-    await mobileBoard.save();
-    await marketingBoard.save();
+    const brandGuideTask = await Task.create({
+      title: 'Brand Guidelines Document',
+      description: 'Comprehensive 50-page brand guide covering logo usage, typography hierarchy, color applications, photography style, tone of voice, and do/don\'ts with examples.',
+      status: 'client-review',
+      priority: 'medium',
+      assignee: mikeUser._id,
+      reporter: janeUser._id,
+      projectId: marketingProject._id,
+      boardId: marketingBoard._id,
+      columnId: marketingBoard.columns[3]?._id, // Client Review
+      collectionId: marketingCollection._id, // IN COLLECTION
+      labels: [
+        { name: 'Documentation', color: '#8B5CF6' },
+        { name: 'Guidelines', color: '#84CC16' }
+      ],
+      dueDate: new Date('2025-12-01'), // MEDIUM deadline
+      order: 4,
+      timeTracked: 840 // 14 hours
+    });
 
-    // Create Comments
+    // Create subtasks for some tasks (testing parent-child relationships)
+    console.log('📝 Creating subtasks...');
+
+    // Subtasks for Payment Gateway (has collection)
+    await Task.create({
+      title: 'Stripe Setup',
+      description: 'Configure Stripe account, API keys, and webhook endpoints',
+      status: 'done',
+      priority: 'high',
+      assignee: mikeUser._id,
+      reporter: adminUser._id,
+      projectId: websiteProject._id,
+      boardId: websiteBoard._id,
+      columnId: websiteBoard.columns[4]?._id,
+      collectionId: websiteCollection._id,
+      parentTaskId: paymentTask._id,
+      isSubtask: true,
+      order: 0,
+      timeTracked: 120
+    });
+
+    await Task.create({
+      title: 'Payment Form UI',
+      // NO DESCRIPTION
+      status: 'in-progress',
+      priority: 'medium',
+      assignee: janeUser._id,
+      reporter: adminUser._id,
+      projectId: websiteProject._id,
+      boardId: websiteBoard._id,
+      columnId: websiteBoard.columns[2]?._id,
+      collectionId: websiteCollection._id,
+      parentTaskId: paymentTask._id,
+      isSubtask: true,
+      order: 1,
+      timeTracked: 90
+    });
+
+    // Subtasks for Workout Logger (mobile - has collection)
+    await Task.create({
+      title: 'Exercise Database',
+      description: 'Import and categorize 200+ exercises with images, instructions, and muscle group tags',
+      status: 'done',
+      priority: 'high',
+      assignee: sarahUser._id,
+      reporter: johnUser._id,
+      projectId: mobileProject._id,
+      boardId: mobileBoard._id,
+      columnId: mobileBoard.columns[4]?._id,
+      collectionId: mobileCollection._id,
+      parentTaskId: workoutLogTask._id,
+      isSubtask: true,
+      order: 0,
+      timeTracked: 300,
+      // NO DUE DATE
+    });
+
+    await Task.create({
+      title: 'Timer Component',
+      // NO DESCRIPTION
+      status: 'in-progress',
+      priority: 'medium',
+      assignee: mikeUser._id,
+      reporter: johnUser._id,
+      projectId: mobileProject._id,
+      boardId: mobileBoard._id,
+      columnId: mobileBoard.columns[2]?._id,
+      collectionId: mobileCollection._id,
+      parentTaskId: workoutLogTask._id,
+      isSubtask: true,
+      order: 1,
+      dueDate: new Date('2025-11-20'), // SHORT deadline
+      timeTracked: 150
+    });
+
+    // Subtasks for Logo Design (marketing - has collection)
+    await Task.create({
+      title: 'Initial Sketches',
+      description: 'Hand-drawn concept sketches exploring different visual directions and symbolic representations',
+      status: 'done',
+      priority: 'medium',
+      assignee: janeUser._id,
+      reporter: janeUser._id,
+      projectId: marketingProject._id,
+      boardId: marketingBoard._id,
+      columnId: marketingBoard.columns[4]?._id,
+      collectionId: marketingCollection._id,
+      parentTaskId: logoTask._id,
+      isSubtask: true,
+      order: 0,
+      // NO DUE DATE
+      timeTracked: 240
+    });
+
+    await Task.create({
+      title: 'Digital Refinements',
+      description: 'Convert best sketches to vector format in Adobe Illustrator with multiple variations and color tests',
+      status: 'done',
+      priority: 'high',
+      assignee: janeUser._id,
+      reporter: janeUser._id,
+      projectId: marketingProject._id,
+      boardId: marketingBoard._id,
+      columnId: marketingBoard.columns[4]?._id,
+      collectionId: marketingCollection._id,
+      parentTaskId: logoTask._id,
+      isSubtask: true,
+      order: 1,
+      dueDate: new Date('2025-11-10'), // Past deadline for testing
+      timeTracked: 360
+    });
+
+    console.log('✅ Created 15 main tasks + 7 subtasks = 22 total tasks');
+
+    // Create realistic comments
     console.log('💬 Creating comments...');
+    
     await Comment.create({
-      content: 'Great work on the design! The color scheme looks modern and professional.',
-      author: adminUser._id,
-      taskId: task1._id,
-      mentions: [janeUser._id]
+      taskId: paymentTask._id,
+      createdBy: adminUser._id,
+      content: '@mike_wilson Great progress on the Stripe integration! Make sure to test the webhook endpoints thoroughly. Also, we need to handle edge cases like partial payments and refunds.',
+      createdAt: new Date('2025-11-05T10:30:00Z')
     });
 
     await Comment.create({
-      content: 'The navigation is coming along well. Should we add a search functionality?',
-      author: janeUser._id,
-      taskId: task2._id,
-      mentions: [johnUser._id]
+      taskId: workoutLogTask._id,
+      createdBy: johnUser._id,
+      content: '@sarah_connor The exercise database looks fantastic! Users will love the detailed instructions. Can we add video demonstrations for complex movements?',
+      createdAt: new Date('2025-11-06T14:15:00Z')
     });
 
     await Comment.create({
-      content: 'The setup is complete. Ready to start working on the core features.',
-      author: mikeUser._id,
-      taskId: task3._id,
-      mentions: [johnUser._id]
+      taskId: logoTask._id,
+      createdBy: mikeUser._id,
+      content: 'The logo concepts are really strong, especially concepts 3, 7, and 9. The minimalist approach in #3 would work well across digital platforms.',
+      createdAt: new Date('2025-11-06T09:45:00Z')
     });
 
-    console.log('✅ Created 3 comments');
+    await Comment.create({
+      taskId: socialTask._id,
+      createdBy: sarahUser._id,
+      content: '@john_doe Should we prioritize the leaderboard feature? It could drive user engagement significantly. What do you think about weekly challenges?',
+      createdAt: new Date('2025-11-06T16:20:00Z')
+    });
+
+    await Comment.create({
+      taskId: brandGuideTask._id,
+      createdBy: janeUser._id,
+      content: 'First draft is complete and ready for review. The document covers all brand touchpoints with clear examples. @mike_wilson please review the technical specifications section.',
+      createdAt: new Date('2025-11-06T11:30:00Z')
+    });
+
+    console.log('✅ Created 5 comments');
 
     console.log('\n🎉 Database seeding completed successfully!');
-    console.log('\n📊 Seeded Data Summary:');
-    console.log('- 5 users (including admin)');
-    console.log('- 3 projects');
-    console.log('- 3 boards with 5 columns each');
-    console.log('- 4 tasks with various statuses');
-    console.log('- 3 comments');
+    console.log('\n📊 Diverse Data Summary:');
+    console.log('- 5 users (different roles and responsibilities)');
+    console.log('- 3 projects (E-commerce, Mobile App, Branding)');
+    console.log('- 3 boards with unique project-specific columns');
+    console.log('- 3 collections/epics (realistic ratio)');
+    console.log('- 15 main tasks (5 per project)');
+    console.log('- 7 subtasks (demonstrating hierarchy)');
+    console.log('- 5 realistic comments with mentions');
+    
+    console.log('\n🎯 Test Scenarios Covered:');
+    console.log('✅ Tasks WITH collections vs WITHOUT collections');
+    console.log('✅ Tasks WITH subtasks vs WITHOUT subtasks');
+    console.log('✅ Tasks WITH descriptions vs WITHOUT descriptions');
+    console.log('✅ Tasks WITH due dates vs WITHOUT due dates');
+    console.log('✅ SHORT deadlines (1-2 weeks) vs LONG deadlines (months)');
+    console.log('✅ OVERDUE tasks (past deadlines)');
+    console.log('✅ Various priorities (high, medium, low)');
+    console.log('✅ All status types across different columns');
+    console.log('✅ Different time tracking amounts (some none, some heavy)');
+    console.log('✅ Diverse label categories and colors');
+    console.log('✅ Mixed assignee distributions');
+    
+    console.log('\n📅 Timeline & Calendar Testing:');
+    console.log('- Tasks due THIS WEEK (Nov 12-19, 2025)');
+    console.log('- Tasks due NEXT MONTH (December 2025)');
+    console.log('- Tasks due NEXT YEAR (2026) for long-term planning');
+    console.log('- Tasks with NO due dates for backlog testing');
+    console.log('- OVERDUE tasks for urgency testing');
 
     console.log('\n🔐 Test Credentials:');
     console.log('Admin: admin@flowboard.com / admin123');
@@ -293,12 +642,11 @@ const seedDatabase = async () => {
     console.log('User: sarah@flowboard.com / password123');
 
   } catch (error) {
-    console.error('❌ Database seeding failed:', error);
+    console.error('Seeding error:', error);
   } finally {
     await mongoose.disconnect();
     console.log('Disconnected from MongoDB');
   }
 };
 
-// Run the seeder
 seedDatabase();

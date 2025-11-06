@@ -158,7 +158,7 @@ export const setupTaskSockets = (io: Server<ClientToServerEvents, ServerToClient
           .populate('boardId', 'name');
         
         // Broadcast to all users in the board
-        io.to(taskData.boardId).emit('task:created', {
+        io.to(taskData.boardId).emit('taskCreated', {
           task: populatedTask,
           createdBy: {
             userId: userId,
@@ -207,7 +207,7 @@ export const setupTaskSockets = (io: Server<ClientToServerEvents, ServerToClient
         .populate('boardId', 'name');
         
         // Broadcast to all users in the board
-        io.to(task.boardId.toString()).emit('task:updated', {
+        io.to(task.boardId.toString()).emit('taskUpdated', {
           task: updatedTask,
           updatedBy: {
             userId: userId,
@@ -259,7 +259,7 @@ export const setupTaskSockets = (io: Server<ClientToServerEvents, ServerToClient
         await Task.findByIdAndDelete(taskId);
         
         // Broadcast to all users in the board
-        io.to(boardId).emit('task:deleted', {
+        io.to(boardId).emit('taskDeleted', {
           taskId,
           deletedBy: {
             userId: userId,
@@ -329,7 +329,7 @@ export const setupTaskSockets = (io: Server<ClientToServerEvents, ServerToClient
           .populate('boardId', 'name');
         
         // Broadcast to all users in the board
-        io.to(boardId).emit('task:moved', {
+        io.to(boardId).emit('taskMoved', {
           task: populatedTask,
           fromColumnId,
           toColumnId,
@@ -365,6 +365,7 @@ export const setupTaskSockets = (io: Server<ClientToServerEvents, ServerToClient
       if (socket.currentBoard) {
         socket.to(socket.currentBoard).emit('user:stop_typing', {
           userId: userId,
+          username: username,
           taskId: taskId,
           timestamp: new Date()
         });

@@ -14,9 +14,12 @@ export interface TaskData {
   projectId: string;
   boardId: string;
   columnId?: string;
+  collectionId?: string; // New: Collection/Epic grouping
+  parentTaskId?: string; // New: For subtasks
   labels?: Array<{ name: string; color: string }>;
   dueDate?: string;
   subtasks?: Array<{ title: string; completed: boolean }>;
+  order?: number; // New: Task ordering
 }
 
 export interface MoveTaskData {
@@ -70,10 +73,48 @@ export interface UserLeftEvent {
   timestamp: Date;
 }
 
+export interface UserStopTypingEvent {
+  userId: string;
+  username: string;
+  taskId: string;
+  timestamp: Date;
+}
+
 export interface UserTypingEvent {
   userId: string;
   username: string;
   taskId: string;
+  timestamp: Date;
+}
+
+export interface CollectionCreatedEvent {
+  collection: any;
+  user: SocketUser;
+  timestamp: Date;
+}
+
+export interface CollectionUpdatedEvent {
+  collection: any;
+  user: SocketUser;
+  timestamp: Date;
+}
+
+export interface CollectionDeletedEvent {
+  collectionId: string;
+  user: SocketUser;
+  timestamp: Date;
+}
+
+export interface CollectionReorderedEvent {
+  collections: any[];
+  user: SocketUser;
+  timestamp: Date;
+}
+
+export interface SubtaskCreatedEvent {
+  task: any;
+  parentTaskId: string;
+  user: SocketUser;
   timestamp: Date;
 }
 
@@ -112,10 +153,19 @@ export interface SocketErrorEvent {
 // Server to Client Events
 export interface ServerToClientEvents {
   // Task events
-  'task:created': (data: TaskCreatedEvent) => void;
-  'task:updated': (data: TaskUpdatedEvent) => void;
-  'task:deleted': (data: TaskDeletedEvent) => void;
-  'task:moved': (data: TaskMovedEvent) => void;
+  'taskCreated': (data: TaskCreatedEvent) => void;
+  'taskUpdated': (data: TaskUpdatedEvent) => void;
+  'taskDeleted': (data: TaskDeletedEvent) => void;
+  'taskMoved': (data: TaskMovedEvent) => void;
+  
+  // Collection events
+  'collectionCreated': (data: CollectionCreatedEvent) => void;
+  'collectionUpdated': (data: CollectionUpdatedEvent) => void;
+  'collectionDeleted': (data: CollectionDeletedEvent) => void;
+  'collectionReordered': (data: CollectionReorderedEvent) => void;
+  
+  // Subtask events
+  'subtaskCreated': (data: SubtaskCreatedEvent) => void;
   
   // User presence events
   'user:joined': (data: UserJoinedEvent) => void;
@@ -142,6 +192,15 @@ export interface ClientToServerEvents {
   'task:update': (taskId: string, updates: Partial<TaskData>) => void;
   'task:delete': (taskId: string) => void;
   'task:move': (moveData: MoveTaskData) => void;
+  
+  // Collection operations
+  'collection:create': (collectionData: any) => void;
+  'collection:update': (collectionId: string, updates: any) => void;
+  'collection:delete': (collectionId: string) => void;
+  'collection:reorder': (projectId: string, collectionOrders: Array<{ id: string; order: number }>) => void;
+  
+  // Subtask operations
+  'subtask:create': (parentTaskId: string, subtaskData: any) => void;
   
   // User interactions
   'user:start_typing': (data: { taskId: string }) => void;

@@ -2,7 +2,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IComment extends Document {
   content: string;
-  author: mongoose.Types.ObjectId;
+  createdBy: mongoose.Types.ObjectId;
   taskId: mongoose.Types.ObjectId;
   mentions: mongoose.Types.ObjectId[];
   createdAt: Date;
@@ -16,7 +16,7 @@ const CommentSchema: Schema = new Schema({
     trim: true,
     maxlength: 2000
   },
-  author: {
+  createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
@@ -36,7 +36,7 @@ const CommentSchema: Schema = new Schema({
 
 // Index for better query performance
 CommentSchema.index({ taskId: 1, createdAt: -1 });
-CommentSchema.index({ author: 1 });
+CommentSchema.index({ createdBy: 1 });
 CommentSchema.index({ mentions: 1 });
 
 export default mongoose.model<IComment>('Comment', CommentSchema);
