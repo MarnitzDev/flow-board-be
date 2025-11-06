@@ -115,8 +115,8 @@ const TaskSchema: Schema = new Schema({
   parentTaskId: {
     type: Schema.Types.ObjectId,
     ref: 'Task',
-    required: false,
-    index: true // For efficient subtask queries
+    required: false
+    // Note: Index defined in compound indexes below
   },
   isSubtask: {
     type: Boolean,

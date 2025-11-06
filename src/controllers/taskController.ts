@@ -13,6 +13,22 @@ export const setSocketIO = (socketInstance: Server) => {
   io = socketInstance;
 };
 
+// Utility function to reorder tasks in a column when orders become too fractional
+const reorderTasksInColumn = async (boardId: string, columnId: string, isSubtask: boolean = false) => {
+  const tasks = await Task.find({ boardId, columnId, isSubtask }).sort({ order: 1 });
+  
+  // Reassign clean integer orders starting from 1
+  for (let i = 0; i < tasks.length; i++) {
+    const task = tasks[i];
+    if (task) {
+      task.order = (i + 1) * 10; // Use multiples of 10 for easier insertion later
+      await task.save();
+    }
+  }
+  
+  return tasks;
+};
+
 // GET /api/tasks - Get tasks for authenticated user (with optional filters)
 export const getTasks = async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
   try {
@@ -75,7 +91,7 @@ export const getTasks = async (req: AuthenticatedRequest, res: Response): Promis
       .populate('reporter', 'username email avatar')
       .populate('projectId', 'name color')
       .populate('boardId', 'name')
-      .sort({ createdAt: -1 });
+      .sort({ columnId: 1, order: 1, createdAt: 1 });
 
     return res.json({
       success: true,
@@ -204,6 +220,18 @@ export const createTask = async (req: AuthenticatedRequest, res: Response): Prom
       });
     }
 
+    // If order is not provided or is 0, set it to the next available order in the column
+    let finalOrder = order;
+    if (columnId && (order === undefined || order === 0)) {
+      const lastTaskInColumn = await Task.findOne({ 
+        boardId, 
+        columnId,
+        isSubtask: !!parentTaskId // Match subtask status
+      }).sort({ order: -1 });
+      
+      finalOrder = lastTaskInColumn ? lastTaskInColumn.order + 1 : 1;
+    }
+
     // Create the task
     const task = new Task({
       title,
@@ -219,7 +247,7 @@ export const createTask = async (req: AuthenticatedRequest, res: Response): Prom
       isSubtask: !!parentTaskId, // Auto-set based on parentTaskId
       labels,
       dueDate: dueDate ? new Date(dueDate) : undefined,
-      order,
+      order: finalOrder,
       subtasks,
       createdBy: userId
     });
@@ -456,8 +484,66 @@ export const moveTask = async (req: AuthenticatedRequest, res: Response): Promis
       });
     }
 
-    // Update task's columnId
+    // Update task's columnId and order
     task.columnId = new mongoose.Types.ObjectId(toColumnId);
+    
+    // If position is provided, update the order based on position
+    if (typeof position === 'number' && position >= 0) {
+      // Get all tasks in the target column to calculate the new order
+      const tasksInTargetColumn = await Task.find({ 
+        boardId: task.boardId, 
+        columnId: toColumnId,
+        isSubtask: task.isSubtask,
+        _id: { $ne: task._id } // Exclude the task being moved
+      }).sort({ order: 1 });
+      
+      // Calculate new order based on position
+      if (position === 0) {
+        // Moving to the beginning
+        task.order = tasksInTargetColumn.length > 0 && tasksInTargetColumn[0] ? tasksInTargetColumn[0].order - 1 : 1;
+      } else if (position >= tasksInTargetColumn.length) {
+        // Moving to the end
+        const lastTask = tasksInTargetColumn[tasksInTargetColumn.length - 1];
+        task.order = tasksInTargetColumn.length > 0 && lastTask ? lastTask.order + 1 : 1;
+      } else {
+        // Moving to middle - set order between two tasks
+        const prevTask = tasksInTargetColumn[position - 1];
+        const nextTask = tasksInTargetColumn[position];
+        if (prevTask && nextTask) {
+          const orderDiff = nextTask.order - prevTask.order;
+          // If the difference is too small (less than 0.1), reorder the entire column
+          if (orderDiff < 0.1) {
+            await reorderTasksInColumn(task.boardId.toString(), toColumnId, task.isSubtask);
+            // Recalculate after reordering
+            const reorderedTasks = await Task.find({ 
+              boardId: task.boardId, 
+              columnId: toColumnId,
+              isSubtask: task.isSubtask,
+              _id: { $ne: task._id }
+            }).sort({ order: 1 });
+            const newPrevTask = reorderedTasks[position - 1];
+            const newNextTask = reorderedTasks[position];
+            task.order = newPrevTask && newNextTask ? (newPrevTask.order + newNextTask.order) / 2 : 
+                        (newPrevTask ? newPrevTask.order + 10 : (newNextTask ? newNextTask.order - 10 : 10));
+          } else {
+            task.order = (prevTask.order + nextTask.order) / 2;
+          }
+        } else {
+          task.order = prevTask ? prevTask.order + 1 : (nextTask ? nextTask.order - 1 : 1);
+        }
+      }
+    } else {
+      // No position specified, add to end of column
+      const lastTaskInColumn = await Task.findOne({ 
+        boardId: task.boardId, 
+        columnId: toColumnId,
+        isSubtask: task.isSubtask,
+        _id: { $ne: task._id }
+      }).sort({ order: -1 });
+      
+      task.order = lastTaskInColumn ? lastTaskInColumn.order + 1 : 1;
+    }
+    
     await task.save();
 
     // Update board columns
@@ -641,7 +727,7 @@ export const getTasksByBoard = async (req: AuthenticatedRequest, res: Response):
       .populate('assignee', 'username email avatar')
       .populate('reporter', 'username email avatar')
       .populate('projectId', 'name color')
-      .sort({ createdAt: -1 });
+      .sort({ columnId: 1, order: 1, createdAt: 1 });
 
     return res.json({
       success: true,
@@ -700,6 +786,14 @@ export const createSubtask = async (req: AuthenticatedRequest, res: Response): P
       });
     }
 
+    // Get the next order for subtasks under this parent
+    const lastSubtask = await Task.findOne({ 
+      parentTaskId,
+      isSubtask: true 
+    }).sort({ order: -1 });
+    
+    const subtaskOrder = lastSubtask ? lastSubtask.order + 1 : 1;
+
     // Create the subtask
     const subtask = new Task({
       title,
@@ -713,6 +807,7 @@ export const createSubtask = async (req: AuthenticatedRequest, res: Response): P
       collectionId: parentTask.collectionId,
       parentTaskId,
       isSubtask: true,
+      order: subtaskOrder,
       dueDate: dueDate ? new Date(dueDate) : undefined,
       createdBy: userId
     });
