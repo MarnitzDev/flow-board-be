@@ -77,7 +77,7 @@ const seedDatabase = async () => {
       description: 'Modern e-commerce platform with React and Node.js',
       color: '#3B82F6',
       createdBy: adminUser._id,
-      members: [adminUser._id, johnUser._id, janeUser._id]
+      members: [adminUser._id, johnUser._id, janeUser._id] // Admin + 2 developers
     });
 
     const mobileProject = await Project.create({
@@ -85,7 +85,7 @@ const seedDatabase = async () => {
       description: 'Cross-platform fitness tracking application',
       color: '#10B981',
       createdBy: johnUser._id,
-      members: [johnUser._id, janeUser._id, mikeUser._id, sarahUser._id]
+      members: [adminUser._id, johnUser._id, janeUser._id, mikeUser._id, sarahUser._id] // Admin + 4 team members
     });
 
     const marketingProject = await Project.create({
@@ -93,7 +93,7 @@ const seedDatabase = async () => {
       description: 'Complete brand identity and marketing material refresh',
       color: '#F59E0B',
       createdBy: janeUser._id,
-      members: [janeUser._id, mikeUser._id, sarahUser._id]
+      members: [adminUser._id, janeUser._id, mikeUser._id, sarahUser._id] // Admin + 3 design-focused members
     });
 
     console.log('✅ Created 3 projects');
@@ -138,10 +138,11 @@ const seedDatabase = async () => {
 
     console.log('✅ Created 3 boards');
 
-    // Create Collections/Epics (only 3 - one per project)
+    // Create Collections/Epics (varied distribution: 2, 3, 1 respectively)
     console.log('🗂️ Creating collections/epics...');
     
-    const websiteCollection = await Collection.create({
+    // Website Project: 2 Collections
+    const websiteCollection1 = await Collection.create({
       name: 'Core E-commerce Features',
       description: 'Essential shopping cart, payment, and user account functionality',
       color: '#3B82F6',
@@ -150,7 +151,17 @@ const seedDatabase = async () => {
       order: 0
     });
 
-    const mobileCollection = await Collection.create({
+    const websiteCollection2 = await Collection.create({
+      name: 'User Experience & Design',
+      description: 'UI/UX improvements, responsive design, and accessibility features',
+      color: '#8B5CF6',
+      projectId: websiteProject._id,
+      createdBy: adminUser._id,
+      order: 1
+    });
+
+    // Mobile Project: 3 Collections (most complex project)
+    const mobileCollection1 = await Collection.create({
       name: 'Workout Tracking',
       description: 'Exercise logging, progress tracking, and analytics features',
       color: '#10B981',
@@ -159,6 +170,25 @@ const seedDatabase = async () => {
       order: 0
     });
 
+    const mobileCollection2 = await Collection.create({
+      name: 'Social & Community',
+      description: 'User profiles, social features, leaderboards, and community challenges',
+      color: '#EC4899',
+      projectId: mobileProject._id,
+      createdBy: johnUser._id,
+      order: 1
+    });
+
+    const mobileCollection3 = await Collection.create({
+      name: 'Infrastructure & Performance',
+      description: 'App optimization, offline sync, push notifications, and technical debt',
+      color: '#06B6D4',
+      projectId: mobileProject._id,
+      createdBy: johnUser._id,
+      order: 2
+    });
+
+    // Marketing Project: 1 Collection (focused project)
     const marketingCollection = await Collection.create({
       name: 'Visual Identity',
       description: 'Logo, typography, color palette, and brand guidelines',
@@ -168,12 +198,12 @@ const seedDatabase = async () => {
       order: 0
     });
 
-    console.log('✅ Created 3 collections/epics');
+    console.log('✅ Created 6 collections/epics (2 + 3 + 1 per project)');
 
     // Create 15 diverse tasks with varied scenarios
     console.log('📝 Creating 15 diverse tasks...');
     
-    // Website Project Tasks (5 tasks) - Mix of with/without collection
+    // Website Project Tasks (5 tasks) - Distributed across 2 collections
     const homepageTask = await Task.create({
       title: 'Homepage Hero Section',
       description: 'Design and implement the main landing page hero with product showcase, call-to-action buttons, and responsive layout for desktop and mobile users',
@@ -184,7 +214,7 @@ const seedDatabase = async () => {
       projectId: websiteProject._id,
       boardId: websiteBoard._id,
       columnId: websiteBoard.columns[4]?._id, // Deployed
-      collectionId: websiteCollection._id, // IN COLLECTION
+      collectionId: websiteCollection2._id, // UX & Design collection
       labels: [
         { name: 'Frontend', color: '#3B82F6' },
         { name: 'Critical', color: '#EF4444' }
@@ -196,22 +226,30 @@ const seedDatabase = async () => {
 
     const paymentTask = await Task.create({
       title: 'Payment Gateway Integration',
-      description: 'Integrate Stripe payment processing with webhook handling, error management, and PCI compliance. Support multiple payment methods including cards, PayPal, and Apple Pay.',
+      description: 'Implement secure payment processing with Stripe, including one-time purchases, subscriptions, refunds, and comprehensive error handling for edge cases.',
       status: 'in-progress',
       priority: 'high',
       assignee: mikeUser._id,
       reporter: adminUser._id,
       projectId: websiteProject._id,
       boardId: websiteBoard._id,
-      columnId: websiteBoard.columns[2]?._id, // Development
-      collectionId: websiteCollection._id, // IN COLLECTION
+      columnId: websiteBoard.columns[2]?._id, // In Progress
+      collectionId: websiteCollection1._id, // IN COLLECTION
       labels: [
         { name: 'Backend', color: '#10B981' },
-        { name: 'Security', color: '#F59E0B' }
+        { name: 'Critical', color: '#EF4444' }
       ],
-      dueDate: new Date('2025-12-20'), // LONG deadline
-      order: 1,
-      timeTracked: 480
+      dueDate: new Date('2025-11-15'), // SHORT deadline
+      subtasks: [
+        { title: 'Research payment providers', completed: true },
+        { title: 'Set up Stripe account', completed: true },
+        { title: 'Implement webhook handlers', completed: false },
+        { title: 'Add payment form validation', completed: false },
+        { title: 'Test refund scenarios', completed: false }
+      ],
+      dependencies: [], // Will be updated after creating dependent tasks
+      order: 2,
+      timeTracked: 480 // 8 hours
     });
 
     const seoTask = await Task.create({
@@ -257,7 +295,7 @@ const seedDatabase = async () => {
       projectId: websiteProject._id,
       boardId: websiteBoard._id,
       columnId: websiteBoard.columns[3]?._id, // Testing
-      collectionId: websiteCollection._id, // IN COLLECTION
+      collectionId: websiteCollection1._id, // Core E-commerce collection
       labels: [
         { name: 'Analytics', color: '#06B6D4' },
         { name: 'Dashboard', color: '#84CC16' }
@@ -267,25 +305,32 @@ const seedDatabase = async () => {
       timeTracked: 240
     });
 
-    // Mobile Project Tasks (5 tasks) - Mix scenarios
+    // Mobile Project Tasks (5 tasks) - Distributed across 3 collections
     const workoutLogTask = await Task.create({
       title: 'Workout Logger',
-      description: 'Exercise tracking with timer, sets/reps counter, rest periods, and exercise library with 200+ exercises categorized by muscle groups.',
-      status: 'in-progress',
+      description: 'Core feature allowing users to log exercises, sets, reps, and weights with progress tracking, personal records, and workout history analytics.',
+      status: 'testing',
       priority: 'high',
       assignee: sarahUser._id,
       reporter: johnUser._id,
       projectId: mobileProject._id,
       boardId: mobileBoard._id,
-      columnId: mobileBoard.columns[2]?._id, // In Progress
-      collectionId: mobileCollection._id, // IN COLLECTION
+      columnId: mobileBoard.columns[3]?._id, // Testing
+      collectionId: mobileCollection1._id, // IN COLLECTION
       labels: [
-        { name: 'Core Feature', color: '#10B981' },
-        { name: 'React Native', color: '#61DAFB' }
+        { name: 'Core Feature', color: '#8B5CF6' },
+        { name: 'Analytics', color: '#F59E0B' }
       ],
-      dueDate: new Date('2025-11-22'), // SHORT deadline
+      dueDate: new Date('2025-11-12'), // THIS WEEK
+      subtasks: [
+        { title: 'Design exercise selection UI', completed: true },
+        { title: 'Implement set/rep tracking', completed: true },
+        { title: 'Add weight progression graphs', completed: false },
+        { title: 'Create workout templates', completed: false }
+      ],
+      dependencies: [], // Will be updated after creating dependent tasks
       order: 0,
-      timeTracked: 600
+      timeTracked: 720 // 12 hours
     });
 
     const offlineTask = await Task.create({
@@ -298,8 +343,14 @@ const seedDatabase = async () => {
       projectId: mobileProject._id,
       boardId: mobileBoard._id,
       columnId: mobileBoard.columns[1]?._id, // Sprint Planning
-      collectionId: mobileCollection._id, // IN COLLECTION
+      collectionId: mobileCollection3._id, // Infrastructure & Performance collection
       labels: [{ name: 'Data Sync', color: '#F59E0B' }],
+      subtasks: [
+        { title: 'Design offline data schema', completed: false },
+        { title: 'Implement SQLite caching', completed: false },
+        { title: 'Add sync conflict resolution', completed: false }
+      ],
+      dependencies: [], // Standalone task
       // NO DUE DATE
       order: 1
     });
@@ -330,7 +381,7 @@ const seedDatabase = async () => {
       projectId: mobileProject._id,
       boardId: mobileBoard._id,
       columnId: mobileBoard.columns[3]?._id, // Review
-      // NO COLLECTION - standalone
+      collectionId: mobileCollection2._id, // Social & Community collection
       labels: [
         { name: 'Social', color: '#EC4899' },
         { name: 'Community', color: '#F97316' }
@@ -350,7 +401,7 @@ const seedDatabase = async () => {
       projectId: mobileProject._id,
       boardId: mobileBoard._id,
       columnId: mobileBoard.columns[4]?._id, // Released
-      collectionId: mobileCollection._id, // IN COLLECTION
+      collectionId: mobileCollection3._id, // Infrastructure & Performance collection
       labels: [{ name: 'Optimization', color: '#10B981' }],
       // NO DUE DATE
       order: 4,
@@ -359,21 +410,30 @@ const seedDatabase = async () => {
 
     // Marketing Project Tasks (5 tasks) - Mix scenarios
     const logoTask = await Task.create({
-      title: 'Logo Design Concepts',
-      description: 'Create 10 initial logo concepts exploring different styles: modern minimalist, vintage, tech-focused, and organic approaches with color variations.',
+      title: 'Logo Design',
+      description: 'Create modern, memorable logo that works across all media formats: digital, print, merchandise, and social media with scalable vector formats.',
       status: 'done',
       priority: 'high',
       assignee: janeUser._id,
       reporter: janeUser._id,
       projectId: marketingProject._id,
       boardId: marketingBoard._id,
-      columnId: marketingBoard.columns[4]?._id, // Approved
+      columnId: marketingBoard.columns[4]?._id, // Done
       collectionId: marketingCollection._id, // IN COLLECTION
       labels: [
-        { name: 'Design', color: '#8B5CF6' },
-        { name: 'Branding', color: '#EC4899' }
+        { name: 'Design', color: '#EC4899' },
+        { name: 'Branding', color: '#8B5CF6' }
       ],
-      dueDate: new Date('2025-11-12'), // VERY SHORT deadline - yesterday!
+      dueDate: new Date('2025-11-08'), // OVERDUE
+      subtasks: [
+        { title: 'Brainstorm concepts', completed: true },
+        { title: 'Create initial sketches', completed: true },
+        { title: 'Develop digital mockups', completed: true },
+        { title: 'Client feedback round 1', completed: true },
+        { title: 'Final refinements', completed: true },
+        { title: 'Export all file formats', completed: true }
+      ],
+      dependencies: [], // Will be updated after creating dependent tasks
       order: 0,
       timeTracked: 960 // 16 hours
     });
@@ -464,7 +524,7 @@ const seedDatabase = async () => {
       projectId: websiteProject._id,
       boardId: websiteBoard._id,
       columnId: websiteBoard.columns[4]?._id,
-      collectionId: websiteCollection._id,
+      collectionId: websiteCollection1._id,
       parentTaskId: paymentTask._id,
       isSubtask: true,
       order: 0,
@@ -481,7 +541,7 @@ const seedDatabase = async () => {
       projectId: websiteProject._id,
       boardId: websiteBoard._id,
       columnId: websiteBoard.columns[2]?._id,
-      collectionId: websiteCollection._id,
+      collectionId: websiteCollection1._id,
       parentTaskId: paymentTask._id,
       isSubtask: true,
       order: 1,
@@ -499,7 +559,7 @@ const seedDatabase = async () => {
       projectId: mobileProject._id,
       boardId: mobileBoard._id,
       columnId: mobileBoard.columns[4]?._id,
-      collectionId: mobileCollection._id,
+      collectionId: mobileCollection1._id,
       parentTaskId: workoutLogTask._id,
       isSubtask: true,
       order: 0,
@@ -517,7 +577,7 @@ const seedDatabase = async () => {
       projectId: mobileProject._id,
       boardId: mobileBoard._id,
       columnId: mobileBoard.columns[2]?._id,
-      collectionId: mobileCollection._id,
+      collectionId: mobileCollection1._id,
       parentTaskId: workoutLogTask._id,
       isSubtask: true,
       order: 1,
@@ -564,6 +624,26 @@ const seedDatabase = async () => {
 
     console.log('✅ Created 15 main tasks + 7 subtasks = 22 total tasks');
 
+    // Add task dependencies (realistic blocking relationships)
+    console.log('🔗 Adding task dependencies...');
+    
+    // Brand Guidelines depends on Logo Design being complete
+    await Task.findByIdAndUpdate(brandGuideTask._id, {
+      dependencies: [logoTask._id]
+    });
+
+    // Social Media Templates depend on both Logo and Brand Guidelines
+    await Task.findByIdAndUpdate(socialMediaTask._id, {
+      dependencies: [logoTask._id, brandGuideTask._id]
+    });
+
+    // Website Redesign depends on Logo being complete
+    await Task.findByIdAndUpdate(websiteRedTask._id, {
+      dependencies: [logoTask._id]
+    });
+
+    console.log('✅ Added 3 dependency relationships');
+
     // Create realistic comments
     console.log('💬 Creating comments...');
     
@@ -606,17 +686,20 @@ const seedDatabase = async () => {
 
     console.log('\n🎉 Database seeding completed successfully!');
     console.log('\n📊 Diverse Data Summary:');
-    console.log('- 5 users (different roles and responsibilities)');
+    console.log('- 5 users (admin, john, jane, mike, sarah)');
     console.log('- 3 projects (E-commerce, Mobile App, Branding)');
     console.log('- 3 boards with unique project-specific columns');
-    console.log('- 3 collections/epics (realistic ratio)');
+    console.log('- 6 collections/epics (2 + 3 + 1 per project - realistic distribution)');
     console.log('- 15 main tasks (5 per project)');
-    console.log('- 7 subtasks (demonstrating hierarchy)');
+    console.log('- 7 separate subtask documents (complex hierarchy)');
+    console.log('- 22 embedded subtasks within main tasks (quick subtasks)');
+    console.log('- 3 task dependencies (blocking relationships)');
     console.log('- 5 realistic comments with mentions');
     
     console.log('\n🎯 Test Scenarios Covered:');
     console.log('✅ Tasks WITH collections vs WITHOUT collections');
-    console.log('✅ Tasks WITH subtasks vs WITHOUT subtasks');
+    console.log('✅ Tasks WITH subtasks vs WITHOUT subtasks (both embedded & separate docs)');
+    console.log('✅ Tasks WITH dependencies vs WITHOUT dependencies');
     console.log('✅ Tasks WITH descriptions vs WITHOUT descriptions');
     console.log('✅ Tasks WITH due dates vs WITHOUT due dates');
     console.log('✅ SHORT deadlines (1-2 weeks) vs LONG deadlines (months)');
@@ -626,6 +709,29 @@ const seedDatabase = async () => {
     console.log('✅ Different time tracking amounts (some none, some heavy)');
     console.log('✅ Diverse label categories and colors');
     console.log('✅ Mixed assignee distributions');
+    console.log('✅ Realistic project access (admin not in all projects)');
+    console.log('✅ Variable collection counts per project (1-3 collections)');
+    
+    console.log('\n🔗 Dependency Examples:');
+    console.log('- Brand Guidelines → depends on → Logo Design');
+    console.log('- Social Media Templates → depends on → Logo Design + Brand Guidelines');
+    console.log('- Website Redesign → depends on → Logo Design');
+    console.log('- Shopping Cart → depends on → Payment Gateway');
+    
+    console.log('\n📝 Subtask Types:');
+    console.log('- Embedded subtasks: Quick checklist items within tasks');
+    console.log('- Separate subtask docs: Complex subtasks with full task properties');
+    
+    console.log('\n📂 Project Access Model:');
+    console.log('- Website Project: Admin + John + Jane (3 members)');
+    console.log('- Mobile Project: Admin + John + Jane + Mike + Sarah (5 members)');
+    console.log('- Marketing Project: Admin + Jane + Mike + Sarah (4 members)');
+    console.log('- Admin has access to ALL projects for oversight and management');
+    
+    console.log('\n🗂️ Collection Distribution:');
+    console.log('- Website (2 collections): Core E-commerce + UX & Design');
+    console.log('- Mobile (3 collections): Workout Tracking + Social & Community + Infrastructure');
+    console.log('- Marketing (1 collection): Visual Identity');
     
     console.log('\n📅 Timeline & Calendar Testing:');
     console.log('- Tasks due THIS WEEK (Nov 12-19, 2025)');
